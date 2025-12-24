@@ -1,0 +1,24 @@
+[build]
+  functions = "netlify/functions"
+
+# --- BAGIAN KEAMANAN (CARA KE-3) ---
+[[headers]]
+  # Terapkan aturan ini untuk SEMUA file di website (/*)
+  for = "/*"
+  
+  [headers.values]
+    # 1. Mencegah website kamu di-embed (iframe) di website lain/bot
+    X-Frame-Options = "DENY"
+
+    # 2. Mencegah browser menebak-nebak tipe file (Mencegah serangan MIME sniffing)
+    X-Content-Type-Options = "nosniff"
+
+    # 3. Mengaktifkan filter anti-XSS bawaan browser
+    X-XSS-Protection = "1; mode=block"
+
+    # 4. Menjaga privasi, tidak mengirim data referrer saat user klik link keluar
+    Referrer-Policy = "same-origin"
+
+    # 5. (Opsional tapi Powerfull) Content Security Policy
+    # Ini membatasi script hanya boleh jalan dari domain sendiri dan CDN yang diizinkan
+    Content-Security-Policy = "default-src 'self' https: 'unsafe-inline' 'unsafe-eval';"

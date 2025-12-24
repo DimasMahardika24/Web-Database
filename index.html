@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lynxxx DB Manager — Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* --- CSS VARIABLES (Dark Mode) --- */
+        :root {
+            --bg-body: #0d1117;
+            --bg-card: #161b22;
+            --bg-input: #0d1117;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --danger: #da3633;
+            --warning: #d29922;
+            --info: #1f6feb;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            display: flex; justify-content: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        /* --- CUSTOM ICONS ANIMATION --- */
+        .custom-sa-icon {
+            font-size: 5rem;
+            margin: 10px auto 20px auto;
+            display: block;
+        }
+
+        /* 1. ADD (Zoom Bounce - Hijau) */
+        .icon-add { color: var(--accent); animation: bounceIn 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000); }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale3d(0.3, 0.3, 0.3); }
+            20% { transform: scale3d(1.1, 1.1, 1.1); }
+            40% { transform: scale3d(0.9, 0.9, 0.9); }
+            60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+            80% { transform: scale3d(0.97, 0.97, 0.97); }
+            100% { opacity: 1; transform: scale3d(1, 1, 1); }
+        }
+
+        /* 2. EDIT (Wiggle Writing - Kuning) */
+        .icon-edit { color: var(--warning); animation: wiggle 1s ease-in-out; }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            50% { transform: rotate(10deg); }
+            75% { transform: rotate(-5deg); }
+        }
+
+        /* 3. DELETE (Shake - Merah) */
+        .icon-del { color: var(--danger); animation: trashShake 0.8s ease-in-out; }
+        @keyframes trashShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+        }
+
+        /* --- LOGIN SHAKE --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .anim-shake { animation: shake 0.4s ease-in-out; border-color: var(--danger) !important; }
+
+        /* --- STANDARD STYLES --- */
+        .login-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; width: 100%; transition: opacity 0.5s ease-out; }
+        .card { background: var(--bg-card); padding: 2rem; border-radius: 8px; border: 1px solid var(--border); width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        
+        input { width: 100%; padding: 10px; margin: 10px 0; background: var(--bg-input); border: 1px solid var(--border); color: white; border-radius: 6px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--info); }
+        button { cursor: pointer; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; color: white; transition: 0.2s; }
+        .btn-primary { background: var(--accent); } .btn-primary:hover { background: var(--accent-hover); transform: scale(1.02); }
+        .btn-danger { background: var(--danger); } .btn-sm { padding: 5px 10px; font-size: 0.85rem; }
+        
+        .dashboard { width: 100%; max-width: 800px; padding: 20px; display: none; opacity: 0; animation: fadeIn 0.8s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 15px; } .search-box { flex-grow: 1; margin: 0 !important; }
+        .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); } th { background: #21262d; color: var(--text-main); }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; border: 1px solid var(--border); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .hidden { display: none !important; } .badge { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-family: monospace; }
+        
+        /* SweetAlert Override */
+        div:where(.swal2-container) div:where(.swal2-popup) { background: var(--bg-card) !important; border: 1px solid var(--border); color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div id="loginView" class="login-container">
+        <div class="card" id="loginCard">
+            <h2 style="text-align:center; margin-top:0"><i class="fa-solid fa-database"></i> DB Manager</h2>
+            <p style="text-align:center; color: var(--text-muted); font-size: 0.9rem">Masukkan Token Database!</p>
+            <input type="password" id="tokenInput" placeholder="Yang Bener Ya...">
+            <button class="btn-primary" style="width:100%" onclick="login()">Masuk</button>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="dashboard">
+        <div class="header">
+            <h3><i class="fa-solid fa-server"></i> Users Database</h3>
+            <button class="btn-danger btn-sm" onclick="logout()"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" id="searchInput" class="search-box" placeholder="Cari nomor atau nama..." onkeyup="filterTable()">
+            <button class="btn-primary" onclick="openModal('add')"><i class="fa-solid fa-plus"></i> Tambah</button>
+            <button class="btn-primary" style="background: var(--info)" onclick="refreshData()"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div id="loadingIndicator" style="text-align:center; padding:20px; display:none">
+            <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
+        </div>
+
+        <div class="table-container">
+            <table id="userTable">
+                <thead><tr><th>No</th><th>Phone</th><th>Username</th><th>PIN</th><th style="text-align:center">Aksi</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <p id="totalCount" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">Total: 0 User</p>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Tambah User</h3>
+            <input type="hidden" id="editIndex">
+            <label style="font-size:0.9rem">Nomor HP</label> <input type="number" id="inputPhone" placeholder="628xxx">
+            <label style="font-size:0.9rem">Username</label> <input type="text" id="inputName" placeholder="Nama User">
+            <label style="font-size:0.9rem">PIN</label> <input type="text" id="inputPin" placeholder="1234">
+            <div class="modal-actions">
+                <button onclick="closeModal()" style="background:transparent; border:1px solid var(--border)">Batal</button>
+                <button id="btnSave" class="btn-primary" onclick="saveUser()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
